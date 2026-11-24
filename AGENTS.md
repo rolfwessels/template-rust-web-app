@@ -17,6 +17,7 @@ Read [README.md](README.md) for project-specific details, setup, and commands.
 
 # Verification & Handoff
 - **TDD:** start with a failing test, write the minimal code to pass, then refactor cleanly once the work is green.
+- **Code conventions:** run the configured linters and static analysis checks. Use focused unit or architecture tests for conventions that need a custom check.
 - **End-to-end verification:** verify beyond unit tests—launch and exercise the running app (including clicking through flows as needed) to confirm real behavior:
   - Run after completing a meaningful chunk of work and always before opening or updating a PR—not on every turn.
   - Drive the real user path (not internal shortcuts) and verify both visible behavior and side effects (screenshots, files, DB, logs, messages).
