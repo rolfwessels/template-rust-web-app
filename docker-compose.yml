@@ -12,4 +12,12 @@ services:
       - "127.0.0.1:8080:8080"
     volumes:
       - .:/workspace
+      - cargo-home:/home/dev/.cargo
+      - cargo-target:/home/dev/.cargo-target
     command: ["sleep", "infinity"]
+
+volumes:
+  cargo-home:
+    name: "${COMPOSE_PROJECT_NAME}_cargo-home-${DEV_UID:-1000}-${DEV_GID:-1000}"
+  cargo-target:
+    name: "${COMPOSE_PROJECT_NAME}_cargo-target-${DEV_UID:-1000}-${DEV_GID:-1000}"

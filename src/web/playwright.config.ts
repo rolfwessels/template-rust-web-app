@@ -1,16 +1,19 @@
 import { defineConfig } from '@playwright/test'
+import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const baseURL = 'http://127.0.0.1:18081'
-const binaryName = process.platform === 'win32' ? 'template-rust-web-app.exe' : 'template-rust-web-app'
-const binary = fileURLToPath(new URL('../../target/release/' + binaryName, import.meta.url))
+const binary = process.platform === 'win32' ? 'template-rust-web-app.exe' : './template-rust-web-app'
+const workspace = fileURLToPath(new URL('../../', import.meta.url))
+const target = resolve(workspace, process.env.CARGO_TARGET_DIR || 'target')
 
 export default defineConfig({
   testDir: './tests',
-  outputDir: '../../target/browser-test-results',
+  outputDir: resolve(target, 'browser-test-results'),
   use: { baseURL, trace: 'retain-on-failure' },
   webServer: {
-    command: JSON.stringify(binary),
+    command: binary,
+    cwd: resolve(target, 'release'),
     env: { LISTEN_ADDR: new URL(baseURL).host },
     url: baseURL + '/healthz',
   },

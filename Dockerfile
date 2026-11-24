@@ -20,8 +20,9 @@ ARG UID=1000
 ARG GID=1000
 RUN groupadd --gid "$GID" dev \
     && useradd --uid "$UID" --gid "$GID" --create-home --shell /bin/bash dev \
-    && install -d -o dev -g dev /workspace /home/dev/.cargo
+    && install -d -o dev -g dev /workspace /home/dev/.cargo /home/dev/.cargo-target
 ENV CARGO_HOME=/home/dev/.cargo
+ENV CARGO_TARGET_DIR=/home/dev/.cargo-target
 WORKDIR /workspace
 USER dev
 

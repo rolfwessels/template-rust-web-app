@@ -19,7 +19,7 @@ make start
 
 Open [localhost:8080](http://127.0.0.1:8080) in two tabs. Click **Add random string** in one tab and watch the new string appear in both. The server starts with two sample strings.
 
-To work in Docker, run `make build up`, then run `make start` from the dev shell. Use `make down` to stop the dev container.
+To work in Docker, run `make build up`, then run `make start` from the dev shell. Named volumes keep Cargo downloads and build artifacts outside the checkout. `make down` stops the dev container and preserves both caches.
 
 ## Make commands
 
@@ -58,7 +58,7 @@ On a Linux machine that needs Chromium system packages, add `--with-deps` to the
 
 The root Dockerfile has separate targets for development and production. `make docker-run` uses the non-root runtime stage and forwards port 8080 to localhost.
 
-Run `make build-release` to produce `target/release/template-rust-web-app`. Set `LISTEN_ADDR` to override the default `127.0.0.1:8080`. Set `RUST_LOG` to control structured log output.
+Run `make build-release` to produce `target/release/template-rust-web-app` on the host. The dev container writes to `$CARGO_TARGET_DIR/release/`. Set `LISTEN_ADDR` to override the default `127.0.0.1:8080`. Set `RUST_LOG` to control structured log output.
 
 - `GET /healthz` reports server health.
 - `POST /graphql` handles queries and mutations.
