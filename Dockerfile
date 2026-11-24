@@ -8,7 +8,8 @@ WORKDIR /app/src/web
 COPY src/web/package.json src/web/pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 COPY src/web/ ./
-RUN pnpm build
+ARG VERSION=dev
+RUN VITE_APP_VERSION="$VERSION" pnpm build
 
 FROM rust:1.100-bookworm AS rust-tools
 

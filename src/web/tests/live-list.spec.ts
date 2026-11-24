@@ -39,6 +39,9 @@ test('an addition appears in both browser sessions without a reload', async ({ b
     const secondItems = second.getByRole('list', { name: 'Shared strings' }).getByRole('listitem')
     await expect(firstItems).toHaveText(seed)
     await expect(secondItems).toHaveText(seed)
+    await expect(first.getByText(/^v\d+\.\d+\.\d+/)).toBeVisible()
+    await expect(first.getByText('2 items', { exact: true })).toBeVisible()
+    await expect(second.getByText('2 items', { exact: true })).toBeVisible()
 
     let navigations = 0
     for (const page of [first, second]) {
@@ -52,6 +55,8 @@ test('an addition appears in both browser sessions without a reload', async ({ b
     const added = await firstItems.last().innerText()
     expect(added).toMatch(/^[a-z0-9]{10}$/i)
     await expect(secondItems).toHaveText([...seed, added])
+    await expect(first.getByText('3 items', { exact: true })).toBeVisible()
+    await expect(second.getByText('3 items', { exact: true })).toBeVisible()
     expect(navigations).toBe(0)
   } finally {
     await Promise.all([first.close(), second.close()])

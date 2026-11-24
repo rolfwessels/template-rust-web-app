@@ -1,4 +1,5 @@
 /target/
+/.pnpm-store/
 /src/web/node_modules/
 /src/web/dist/
 /src/web/playwright-report/

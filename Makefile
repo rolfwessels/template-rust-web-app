@@ -53,7 +53,7 @@ install:
 	cd src/web && $(PNPM) install --frozen-lockfile
 
 web-build: install
-	cd src/web && $(PNPM) build
+	cd src/web && VITE_APP_VERSION="$(VERSION)" $(PNPM) build
 
 start: web-build
 	APP_VERSION="$(VERSION)" cargo run --locked --features embed-web -p $(PROJECT)

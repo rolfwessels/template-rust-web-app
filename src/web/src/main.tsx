@@ -8,7 +8,7 @@ import { apolloClient } from './graphql'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <Theme radius="small">
+    <Theme accentColor="iris" grayColor="slate" radius="medium">
       <ApolloProvider client={apolloClient}>
         <App />
       </ApolloProvider>
