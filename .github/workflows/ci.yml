@@ -1,0 +1,86 @@
+name: Test and Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '24'
+
+    - name: Install pnpm
+      uses: pnpm/action-setup@v2
+      with:
+        version: 10.34.7
+
+    - name: Install and codegen
+      run: |
+        make install
+        make codegen
+    - name: Test
+      run: |
+        make test
+    - name: Audit production dependencies for known vulnerabilities
+      run: pnpm audit --prod --audit-level low
+    - name: Audit all dependencies for known vulnerabilities
+      # Unpatched dev-only codegen dependency; see README Dependency compatibility.
+      # The production audit above must not ignore this advisory.
+      run: |
+        pnpm audit --ignore CVE-2026-93687
+        pnpm audit --audit-level low
+  build:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Full git history for Makefile
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '24'
+
+    - name: Install pnpm
+      uses: pnpm/action-setup@v2
+      with:
+        version: 10.34.7
+
+    - name: Install
+      run: |
+        make install
+
+    - name: Build
+      run: make build-release 
+
+    - name: Check docker build
+      run: |
+        make docker-build
+    
+    - name: Zip build
+      run: make zip-build
+
+    - name: Get version
+      id: version
+      run: echo "VERSION=$(make version)" >> $GITHUB_OUTPUT
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: release.v${{ steps.version.outputs.VERSION }}.zip
+        path: dist/release.v${{ steps.version.outputs.VERSION }}.zip
+      
+
+
+    
+    
