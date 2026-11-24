@@ -1,159 +1,69 @@
-# template-rust-web-app
+# Template Rust Web App
 
-A lightweight, modern React Single Page Application (SPA) template using Vite and Radix UI. Built for speed, accessibility, and rapid development — with optional GraphQL integration via Apollo Client.
+A small Rust and React web app template. Two browser sessions share one in-memory list. Add a random string in either session and both update live.
 
-## 🚀 Features
+## Features
 
-- ⚛️ React + Vite (super-fast dev experience)
-- 🎛️ Radix UI for accessible, themeable components
-- 📊 Recharts for data visualization
-- 🔌 Optional GraphQL support with Apollo Client and graphql-codegen
-- 🧪 Vitest + Testing Library for testing
-- 🛠️ Makefile automation for local/dev tasks
-- 🐳 Docker + DevContainer ready
-- 📦 Clean, minimal scaffold
+- Axum and async-graphql provide a query, mutation, and WebSocket subscription.
+- A framework-independent Rust application core defines the list use cases and storage port.
+- React, Radix Themes, and Apollo Client render the list and receive live updates.
+- One Rust release binary serves the API and the embedded frontend.
 
-## 🏁 Getting Started
+## Getting started
 
-### Prerequisites
+Use Rust 1.100 or later, Node.js 24, and pnpm 10.34.7. The Makefile can use Corepack when pnpm is available through it. Install Docker to use the provided development or release containers.
 
-- Node.js 24.x (matches the development container)
-- pnpm 10.x
-- Docker (optional for devcontainers)
-
-```bash
-nvm install 24
-npm install -g pnpm@10
-node -v
+```sh
+make start
 ```
 
-### Clone and Setup
+Open [localhost:8080](http://127.0.0.1:8080) in two tabs. Click **Add random string** in one tab and watch the new string appear in both. The server starts with two sample strings.
 
-```bash
-git clone https://github.com/rolfwessels/template-rust-web-app.git my-app
-cd my-app
+To work in Docker, run `make build up`, then run `make start` from the dev shell. Use `make down` to stop the dev container.
+
+## Make commands
+
+| Command | Purpose |
+| --- | --- |
+| `make version` | Print the Git-derived version used for binaries and Docker tags. |
+| `make install` | Install frontend dependencies from the pnpm lockfile. |
+| `make start` | Build the frontend and start the local server. |
+| `make test-rust` | Run the fast application and GraphQL tests. |
+| `make test` | Run Rust and TypeScript checks and the Rust tests. |
+| `make build-release` | Build the frontend, then embed it in the Rust release binary. |
+| `make verify` | Run checks and the two-browser smoke test. |
+| `make docker-build` | Build and tag the runtime image. |
+| `make docker-run` | Run the runtime image locally with Compose. |
+
+## Folder structure
+
+- `src/core/` holds the list port and use cases.
+- `src/server/` holds the GraphQL, HTTP, and in-memory adapters.
+- `src/web/` holds the React app and browser smoke test. Vite writes the production bundle to `src/web/dist/`.
+- `AGENTS.md` describes the dependency direction, test-first workflow, and verification commands.
+
+## Testing
+
+Use `make test-rust` for a fast feedback loop. Install Chromium once for the browser test and run the full verification.
+
+```sh
 make install
-make dev
+(cd src/web && corepack pnpm exec playwright install chromium)
+make verify
 ```
 
-## 🧰 Make Commands
+On a Linux machine that needs Chromium system packages, add `--with-deps` to the Chromium install command. Use `pnpm` in place of `corepack pnpm` if you installed it directly.
 
-```bash
-make install        # Install dependencies
-make start          # Start dev server
-make build          # Build production version
-make test           # Run tests
-make codegen        # Generate graphql types
-make build-release  # Build release version of the project
-```
+## Deployment
 
-## 📁 Folder Structure
+The root Dockerfile has separate targets for development and production. `make docker-run` uses the non-root runtime stage and forwards port 8080 to localhost.
 
-```
-src/
-  components/     # Radix-wrapped reusable components
-  pages/          # App pages routed via TanStack Router
-  hooks/          # Custom hooks
-  lib/            # Utilities, clients, etc.
-  graphql/        # (Optional) GraphQL fragments/clients
-  styles/
-  App.tsx
-  main.tsx
-```
+Run `make build-release` to produce `target/release/template-rust-web-app`. Set `LISTEN_ADDR` to override the default `127.0.0.1:8080`. Set `RUST_LOG` to control structured log output.
 
-## 🤖 For AI Coding Assistants
+- `GET /healthz` reports server health.
+- `POST /graphql` handles queries and mutations.
+- `/graphql/ws` accepts subscriptions using `graphql-transport-ws`.
 
-**Important:** Before making any changes to this codebase, please read the project conventions and guidelines in `.cursor/rules/main.mdc`. This file contains:
-- Styling rules (NO TAILWIND - Radix UI only)
-- Code organization patterns
-- Naming conventions
-- DRY principles
-- Testing requirements
+## License
 
-Following these rules ensures consistency and maintainability across the project.
-
-## 🧪 Testing
-
-- **Vitest** for unit tests
-- **Testing Library** for UI tests
-
-```bash
-make test
-```
-
-## 📦 Deployment
-
-- `src\Dockerfile` for containerized builds
-- `make docker-build` for local prod builds
-- Can be deployed to Vercel, Netlify, or any static host with SPA support
-
-## 🔗 Optional Integrations
-
-- State management with Zustand (if needed)
-- GitHub Actions CI template available
-
-## ❓ FAQ
-
-### How do I update packages?
-
-To safely update your project dependencies:
-
-```bash
-# 1. Check for outdated packages
-pnpm outdated
-
-# 2. Update packages (choose one approach)
-pnpm update          # Update within semver ranges
-pnpm update --latest # Update to latest versions (be careful!)
-
-# 3. ALWAYS run tests after updating
-make test
-
-# 4. If tests pass, commit the changes
-git add package.json pnpm-lock.yaml
-git commit -m "chore: update dependencies"
-```
-
-**⚠️ Important Notes:**
-- Always run `make test` after updating packages to catch breaking changes
-- Consider updating major versions one at a time for easier debugging
-- Check the changelog of major version bumps before updating
-- Test your app thoroughly in both development and production builds
-
-### Dependency compatibility
-
-- TypeScript stays on 6.x until typescript-eslint supports TypeScript 7.
-- ESLint stays on 9.x until eslint-plugin-react supports ESLint 10.
-- GraphQL stays on 16.x until the near-operation-file and React Apollo codegen plugins support GraphQL 17.
-- Node.js types track the container's Node.js 24 runtime.
-- The GraphQL Tools override keeps codegen on a patched version of its utilities.
-
-`pnpm audit` still reports [GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm)
-for `braces`, pulled in by the development-only GraphQL codegen CLI. No patched
-release is available; avoid untrusted glob patterns in codegen configuration.
-CI explicitly excludes only this CVE (`CVE-2026-93687`) from the all-dependencies
-audit until a patched release is available. A separate production audit has no
-exceptions, and all other advisories still fail CI.
-
-### How do I add a new package?
-
-```bash
-# Add a runtime dependency
-pnpm add package-name
-
-# Add a dev dependency  
-pnpm add -D package-name
-
-# Don't forget to test!
-make test
-```
-
-## 🔍 Things that we are working on
-
-- [x] Better graphql integration (we want proper types)
-- [ ] We want to use local storage as cache (load from cache > check server > update cache)
-- [x] I don't like all the .config files in the root. Can we do something better? 
-
-## 📜 License
-
-MIT — use it however you like!
+MIT.

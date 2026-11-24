@@ -1,0 +1,28 @@
+[package]
+name = "template-rust-web-app"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[features]
+embed-web = ["dep:include_dir", "dep:mime_guess"]
+
+[dependencies]
+app-core = { package = "template-rust-web-app-core", path = "../core" }
+async-graphql = { version = "7.2", default-features = false }
+async-graphql-axum = "7.2"
+axum = "0.8"
+include_dir = { version = "0.7", optional = true }
+mime_guess = { version = "2", optional = true }
+rand = "0.10"
+serde_json = "1"
+tokio = { version = "1", features = ["macros", "net", "rt-multi-thread", "sync"] }
+tokio-stream = { version = "0.1", features = ["sync"] }
+tower-http = { version = "0.6", features = ["trace"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+
+[dev-dependencies]
+futures-util = "0.3"
+tokio = { version = "1", features = ["time"] }
+tower = { version = "0.5", features = ["util"] }

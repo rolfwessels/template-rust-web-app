@@ -1,11 +1,10 @@
-version: '3.8'
 services:
   web:
     build:
-      context: ../
-      dockerfile: src/Dockerfile
-      target: production
+      context: ..
+      dockerfile: Dockerfile
+      target: runtime
+      args:
+        VERSION: ${VERSION:-dev}
     ports:
-      - "8080:80"
-    environment:
-      - NODE_ENV=production
+      - "127.0.0.1:8080:8080"

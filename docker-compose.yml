@@ -1,20 +1,15 @@
 services:
   dev:
-    container_name: template-rust-web-app-dev
     build:
-      context: ./
-      dockerfile: Dockerfile
-    volumes:
-      - ".:/template-rust-web-app"
-      - "./.aws:/root/.aws"
-      - "./zshrc:/root/.zshrc"
-      - template-rust-web-app-cache:/cache
-      - /var/run/docker.sock:/var/run/docker.sock
+      context: .
+      target: dev
+      args:
+        UID: ${DEV_UID:-1000}
+        GID: ${DEV_GID:-1000}
     environment:
-      - HISTFILE=/cache/.bash_history
-    entrypoint: top -b
-    logging:
-      driver: none
-
-volumes:
-  template-rust-web-app-cache:
+      LISTEN_ADDR: 0.0.0.0:8080
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - .:/workspace
+    command: ["sleep", "infinity"]

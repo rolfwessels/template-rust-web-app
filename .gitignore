@@ -1,7 +1,6 @@
-node_modules
-dist
+/target/
+/src/web/node_modules/
+/src/web/dist/
+/src/web/playwright-report/
+/src/web/test-results/
 .env
-src/.tmp/
-.vite/
-PR_REVIEW.md
-.pnpm-store/

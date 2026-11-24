@@ -1,224 +1,83 @@
 .DEFAULT_GOAL := help
 
-# General Variables
-date=$(shell date +'%y.%m.%d.%H.%M')
-project := Template-react-spa-site
-container := dev
-docker-file-check := /.dockerenv
-docker-warning := ""
-RED=\033[0;31m
-GREEN=\033[0;32m
-NC=\033[0m # No Color
-versionPrefix := 0.1
-version := $(versionPrefix).$(shell git rev-list HEAD --count)
-git-short-hash := $(shell git rev-parse --short=8 HEAD)
-version-suffix := ''
-dockerhub := dockerhub.com/template-rust-web-app
+PROJECT := template-rust-web-app
+IMAGE ?= $(PROJECT)
+PNPM ?= $(if $(shell command -v pnpm 2>/dev/null),pnpm,corepack pnpm)
+VERSION_PREFIX := 0.1
+BRANCH := $(or $(GITHUB_HEAD_REF),$(GITHUB_REF_NAME),$(shell git branch --show-current 2>/dev/null),main)
+COMMIT_COUNT := $(or $(shell git rev-list --count HEAD 2>/dev/null),0)
+SHORT_HASH := $(or $(shell git rev-parse --short=8 HEAD 2>/dev/null),00000000)
 
-release := release
-ifeq ($(env), dev)
-	release := debug
-	version-suffix:= ""
-endif
-
-ifdef GITHUB_BASE_REF
-	current-branch :=  $(patsubst refs/heads/%,%,${GITHUB_HEAD_REF})
-else ifdef GITHUB_REF
-	current-branch :=  $(patsubst refs/heads/%,%,${GITHUB_REF})
+ifeq ($(BRANCH),main)
+VERSION := $(VERSION_PREFIX).$(COMMIT_COUNT)
+IMAGE_TAGS := latest alpha v$(VERSION) $(SHORT_HASH)
 else
-	current-branch :=  $(shell git rev-parse --abbrev-ref HEAD)
+BASE := $(or $(shell git rev-parse --verify --quiet origin/main),$(shell git rev-parse --verify --quiet main),HEAD)
+BASE_COUNT := $(or $(shell git rev-list --count $(BASE) 2>/dev/null),0)
+BRANCH_COUNT := $(or $(shell git rev-list --count $(BASE)..HEAD 2>/dev/null),0)
+VERSION := $(VERSION_PREFIX).$(BASE_COUNT).$(BRANCH_COUNT)-alpha
+IMAGE_TAGS := alpha v$(VERSION) $(SHORT_HASH)
 endif
 
-ifeq ($(current-branch), main)
-	docker-tags := -t $(dockerhub):alpha -t $(dockerhub):latest -t $(dockerhub):v$(version) -t $(dockerhub):$(git-short-hash)
-	version-full := $(version)
-else
-	version := $(versionPrefix).$(shell git rev-list origin/main --count).$(shell git rev-list origin/main..HEAD --count)
-	version-suffix := alpha
-	version-full := $(version)-$(version-suffix)
-	docker-tags := -t $(dockerhub):$(version-suffix) -t $(dockerhub):$(git-short-hash) -t $(dockerhub):v$(version-full)
-endif
+.PHONY: help version build up down install start test test-rust test-web \
+	web-build build-release test-browser verify docker-build docker-run
 
-# Docker Warning
-ifeq ("$(wildcard $(docker-file-check))","")
-	docker-warning = "⚠️  WARNING: Can't find /.dockerenv - it's strongly recommended that you run this from within the docker container."
-endif
-
-# Targets
 help:
-	@echo "The following commands can be used for building & running & deploying the the $(project) container"
-	@echo "---------------------------------------------------------------------------------------------"
-	@echo "Targets:"
-	@echo "  Docker Targets (run from local machine)"
-	@echo "   - up          : brings up the container & attach to the default container ($(container))"
-	@echo "   - down        : stops the container"
-	@echo "   - build       : (re)builds the container"
-	@echo ""
-	@echo "  Service Targets (should only be run inside the docker container)"
-	@echo "   - install 			  : Install dependencies"
-	@echo "   - start                 : Run the $(project)"
-	@echo "   - test                  : Test the $(project)"
-	@echo "   - build-release         : Build release version of the $(project)"
-	@echo "   - zip-build             : Zip the build"
-	@echo "   - version               : Print the current version number"
-	@echo "   - codegen               : Generate the graphql types"
-	@echo ""
-	@echo "   - docker-login          : Login to docker registry"
-	@echo "   - docker-build          : Build the docker image"
-	@echo "   - docker-push           : Push the docker image"
-	@echo "   - docker-pull-short-tag : Pull the docker image based in git short hash"
-	@echo "   - docker-tag-env        : Tag the docker image based in the environment"
-	@echo "   - docker-publish        : Publish the docker image"
-	@echo "   - deploy                : Deploy the $(project)"
-	@echo "   - update-packages       : Update the packages"
-	@echo "   - pr-review             : Generate PR review report"
-
-	
-	@echo ""
-	@echo "Options:"
-	@echo " - env    : sets the environment - supported environments are: dev | prod"
-	@echo ""
-	@echo "Examples:"
-	@echo " - Start Docker Container              : make up"
-	@echo " - Rebuild Docker Container            : make build"
-	@echo " - Rebuild & Start Docker Container    : make build up"
-	@echo " - publish and deploy                  : make publish deploy env=dev"
-
-up:
-	@echo "Starting containers..."
-	@docker compose up -d
-	@echo "Attaching shell..."
-	@docker compose exec $(container) zsh
-
-down:
-	@echo "Stopping containers..."
-	@docker compose down
-
-build: down
-	@echo "Building containers..."
-	@docker compose build
-
-install:
-	@echo -e "Installing dependencies for ${GREEN}v${version}${NC}"
-	@npm install -g pnpm@10.34.7
-	@node -v
-	@pnpm install
-	
-
-start: 
-	@echo -e "Starting the $(release) release of $(project)"
-	@pnpm start
-
-codegen:
-	@echo -e "Generating graphql types"
-	@pnpm codegen
-
-test:
-	@echo -e "🔍 Linting"
-	@pnpm lint
-	@echo -e "🔍 Type checking"
-	@pnpm tsc --noEmit
-	@echo -e "🔍 Testing"
-	@pnpm vitest run --config config/vitest.config.ts
+	@printf '%s\n' \
+		'make version        Print the Git-derived version' \
+		'make build up       Build the dev container and open a shell' \
+		'make down           Stop the dev container' \
+		'make install        Install locked frontend dependencies' \
+		'make start          Build the frontend and start the app' \
+		'make test-rust      Run the fast Rust tests' \
+		'make test           Run Rust and TypeScript checks and Rust tests' \
+		'make build-release  Build the release binary with the UI embedded' \
+		'make verify         Run checks and the two-browser test' \
+		'make docker-build   Build and tag the runtime image' \
+		'make docker-run     Build and run the runtime image with Compose'
 
 version:
-	@echo $(version)
+	@printf '%s\n' "$(VERSION)"
 
-build-release: 
-	@echo -e "Building the ${GREEN}v${version}${NC}-$(release) release of $(project)"
-	@pnpm build
+build:
+	docker compose build
 
-zip-build:
-	@echo -e "Zipping the  ${GREEN}v${version}${NC}-$(release)"
-	@zip -r dist/release.v${version}.zip dist
+up:
+	docker compose up -d
+	docker compose exec dev bash
 
+down:
+	docker compose down
 
-docker-login: 
-	@echo -e "Login to docker $(registry)"
-	@read -p "Username: " docker_username; \
-	read -s -p "Password: " docker_password; \
-	echo ""; \
-	echo $$docker_password | docker login --username $$docker_username --password-stdin
+install:
+	cd src/web && $(PNPM) install --frozen-lockfile
+
+web-build: install
+	cd src/web && $(PNPM) build
+
+start: web-build
+	APP_VERSION="$(VERSION)" cargo run --locked --features embed-web -p $(PROJECT)
+
+test-rust:
+	cargo test --workspace --locked
+
+test-web: install
+	cd src/web && $(PNPM) typecheck && $(PNPM) lint
+
+test: test-rust test-web
+	cargo fmt --all --check
+	cargo clippy --workspace --all-targets --locked -- -D warnings
+
+build-release: web-build
+	APP_VERSION="$(VERSION)" cargo build --release --locked --features embed-web -p $(PROJECT)
+
+test-browser: build-release
+	cd src/web && $(PNPM) test:browser
+
+verify: test test-browser
 
 docker-build:
-	@echo -e "Building branch ${RED}$(current-branch)${NC} to ${GREEN}$(docker-tags)${NC} with ${GREEN}$(version-full)${NC}"
-	@docker build -f src/Dockerfile --build-arg VERSION=$(version) --build-arg VERSION_SUFFIX=$(version-suffix) ${docker-tags} .
+	docker build --target runtime --build-arg VERSION="$(VERSION)" $(foreach tag,$(IMAGE_TAGS),-t $(IMAGE):$(tag)) .
 
-docker-push:
-	@echo -e "Pushing to ${GREEN}$(docker-tags)${NC}"
-	@docker push --all-tags $(registry)
-	@docker images | grep "$(registry)" | awk '{system("docker rmi " "'"$(registry):"'" $$2)}'
-
-docker-pull-short-tag:
-	@echo -e "Pulling ${GREEN}$(registry):$(git-short-hash)${NC}"
-	@docker pull "$(registry):$(git-short-hash)" 
-
-docker-tag-env: env-check
-	@echo -e "Tagging release ${GREEN}$(env)${NC}"
-	@docker tag "$(registry):$(git-short-hash)" "$(registry):$(env)"	
-	@docker images | grep "$(registry)"
-
-docker-publish: docker-build docker-login docker-push
-	@echo -e "Done"
-
-deploy: publish env-check
-	@echo -e "Deploying ${GREEN}v${version}${NC} of $(release)"
-
-docker-check:
-	$(call assert-file-exists,$(docker-file-check), This step should only be run from Docker. Please run `make up` first.)
-
-env-check:
-	$(call check_defined, env, No environment set. Supported environments are: [ dev | prod ]. Please set the env variable. e.g. `make env=dev publish`)
-
-# Check that given variables are set and all have non-empty values,
-# die with an error otherwise.
-#
-# Params:
-#   1. Variable name(s) to test.
-#   2. (optional) Error message to print.
-check_defined = \
-    $(strip $(foreach 1,$1, \
-    	$(call __check_defined,$1,$(strip $(value 2)))))
-__check_defined = \
-    $(if $(value $1),, \
-    	$(error Undefined $1$(if $2, ($2))))
-
-define assert
-  $(if $1,,$(error Assertion failed: $2))
-endef
-
-define assert_warn
-  $(if $1,,$(warn Assertion failed: $2))
-endef
-
-define assert-file-exists
-  $(call assert,$(wildcard $1),$1 does not exist. $2)
-endef
-
-pr-review:
-	@echo -e "Generating PR review report..."
-	@echo "# PR Review Report" > PR_REVIEW.md
-	@echo "" >> PR_REVIEW.md
-	@echo "**Generated:** $$(date '+%Y-%m-%d %H:%M:%S')" >> PR_REVIEW.md
-	@echo "**Current Branch:** $(current-branch)" >> PR_REVIEW.md
-	@echo "**Base Branch:** main" >> PR_REVIEW.md
-	@echo "" >> PR_REVIEW.md
-	@echo "## File Statistics" >> PR_REVIEW.md
-	@echo "" >> PR_REVIEW.md
-	@echo '```' >> PR_REVIEW.md
-	@git diff main...HEAD --stat >> PR_REVIEW.md
-	@echo '```' >> PR_REVIEW.md
-	@echo "" >> PR_REVIEW.md
-	@echo "## Commit History" >> PR_REVIEW.md
-	@echo "" >> PR_REVIEW.md
-	@echo '```' >> PR_REVIEW.md
-	@git log main..HEAD --oneline >> PR_REVIEW.md
-	@echo '```' >> PR_REVIEW.md
-	@echo "" >> PR_REVIEW.md
-	@echo "## Full Diff" >> PR_REVIEW.md
-	@echo "" >> PR_REVIEW.md
-	@echo '```diff' >> PR_REVIEW.md
-	@git diff main...HEAD >> PR_REVIEW.md
-	@echo '```' >> PR_REVIEW.md
-	@echo -e "${GREEN}✓${NC} PR review report generated: PR_REVIEW.md"
-
+docker-run:
+	VERSION="$(VERSION)" docker compose -f src/docker-compose.yml up --build

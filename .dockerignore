@@ -1,10 +1,6 @@
-node_modules
-.gitignore
-.vscode
-dist
-test
-*.log
-Dockerfile
-docker-compose.yml
-README.md
-ai-setup.md 
+.git
+target
+src/web/node_modules
+src/web/dist
+src/web/playwright-report
+src/web/test-results
