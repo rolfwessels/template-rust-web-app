@@ -16,15 +16,24 @@ FROM rust:1.100-bookworm AS rust-tools
 FROM rust-tools AS dev
 COPY --from=node-tools /usr/local/ /usr/local/
 RUN rustup component add rustfmt clippy
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends nano zsh \
+    && rm -rf /var/lib/apt/lists/*
 ARG UID=1000
 ARG GID=1000
 RUN groupadd --gid "$GID" dev \
-    && useradd --uid "$UID" --gid "$GID" --create-home --shell /bin/bash dev \
-    && install -d -o dev -g dev /workspace /home/dev/.cargo /home/dev/.cargo-target
+    && useradd --uid "$UID" --gid "$GID" --create-home --shell /bin/zsh dev \
+    && install -d -o dev -g dev /workspace /home/dev/.cargo /home/dev/.cargo-target /cache
 ENV CARGO_HOME=/home/dev/.cargo
 ENV CARGO_TARGET_DIR=/home/dev/.cargo-target
+ENV LANG=C.UTF-8
+ENV TERM=xterm-256color
 WORKDIR /workspace
 USER dev
+RUN install -m 600 /dev/null /cache/.zsh_history \
+    && sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended \
+    && git clone --depth 1 https://github.com/zsh-users/zsh-autosuggestions.git "$HOME/.oh-my-zsh/custom/plugins/zsh-autosuggestions"
+COPY --chown=dev:dev zshrc /home/dev/.zshrc
 
 FROM rust-tools AS build
 ARG VERSION=dev

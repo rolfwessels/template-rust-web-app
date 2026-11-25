@@ -8,15 +8,19 @@ services:
         GID: ${DEV_GID:-1000}
     environment:
       LISTEN_ADDR: 0.0.0.0:8080
+      HISTFILE: /cache/.zsh_history
     ports:
       - "127.0.0.1:8080:8080"
     volumes:
       - .:/workspace
+      - ./zshrc:/home/dev/.zshrc
+      - shell-history:/cache
       - cargo-home:/home/dev/.cargo
       - cargo-target:/home/dev/.cargo-target
     command: ["sleep", "infinity"]
 
 volumes:
+  shell-history:
   cargo-home:
     name: "${COMPOSE_PROJECT_NAME}_cargo-home-${DEV_UID:-1000}-${DEV_GID:-1000}"
   cargo-target:
