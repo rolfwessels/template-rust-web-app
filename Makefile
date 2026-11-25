@@ -20,7 +20,7 @@ IMAGE_TAGS := alpha v$(VERSION) $(SHORT_HASH)
 endif
 
 .PHONY: help version build up down install start test test-rust test-web \
-	web-build build-release test-browser verify docker-build docker-run
+	web-build build-release test-browser scan verify docker-build docker-run
 
 help:
 	@printf '%s\n' \
@@ -32,7 +32,8 @@ help:
 		'make test-rust      Run the fast Rust tests' \
 		'make test           Run Rust and TypeScript checks and Rust tests' \
 		'make build-release  Build the release binary with the UI embedded' \
-		'make verify         Run checks and the two-browser test' \
+		'make scan           Audit Cargo and pnpm dependencies' \
+		'make verify         Run checks, the dependency audit, and the two-browser test' \
 		'make docker-build   Build and tag the runtime image' \
 		'make docker-run     Build and run the runtime image with Compose'
 
@@ -44,7 +45,7 @@ build:
 
 up:
 	docker compose up -d
-	docker compose exec dev bash
+	docker compose exec dev zsh
 
 down:
 	docker compose down
@@ -74,7 +75,12 @@ build-release: web-build
 test-browser: build-release
 	cd src/web && $(PNPM) test:browser
 
+scan:
+	cargo audit
+	cd src/web && $(PNPM) audit --audit-level low
+
 verify: test test-browser
+	$(MAKE) scan
 
 docker-build:
 	docker build --target runtime --build-arg VERSION="$(VERSION)" $(foreach tag,$(IMAGE_TAGS),-t $(IMAGE):$(tag)) .

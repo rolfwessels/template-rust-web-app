@@ -24,4 +24,11 @@ jobs:
           make install
           cd src/web
           corepack pnpm exec playwright install --with-deps chromium
-      - run: make verify
+      - name: Install cargo-audit
+        run: cargo install --locked cargo-audit --version 0.22.2
+      - name: Test
+        run: make test
+      - name: Audit dependencies for known vulnerabilities
+        run: make scan
+      - name: Two-browser smoke test
+        run: make test-browser
