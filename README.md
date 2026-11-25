@@ -32,7 +32,8 @@ The dev shell shows a 🐳 prompt and saves Zsh history in a project volume acro
 | --- | --- |
 | `make start` | Build the frontend and start the local server. |
 | `make test` | Run Rust and TypeScript checks and the Rust tests. |
-| `make verify` | Run checks and the two-browser smoke test. |
+| `make scan` | Audit Cargo and pnpm dependencies. |
+| `make verify` | Run tests, the dependency audit, and the two-browser smoke test. |
 | `make build up` | Build the development container and open its shell. |
 | `make down` | Stop the development container from the host. |
 
@@ -47,9 +48,10 @@ Run `make help` for more targets.
 
 ## 🧪 Testing
 
-Use `make test-rust` for a fast feedback loop. Install Chromium once for the browser test and run the full verification.
+Use `make test-rust` for a fast feedback loop. Install `cargo-audit` and Chromium once to run the full verification.
 
 ```sh
+cargo install --locked cargo-audit --version 0.22.2
 make install
 (cd src/web && corepack pnpm exec playwright install chromium)
 make verify
