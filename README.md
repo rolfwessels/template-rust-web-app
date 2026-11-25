@@ -24,6 +24,8 @@ Open [localhost:8080](http://127.0.0.1:8080) in two tabs. Click **Add random str
 
 To work in Docker, run `make build up`, then run `make start` from the dev shell. Use `make down` to stop the dev container.
 
+The dev shell shows a 🐳 prompt and saves Zsh history in a project volume across `make down` and rebuilds.
+
 ## 📋 Make commands
 
 | Command | Purpose |

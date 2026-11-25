@@ -44,7 +44,7 @@ build:
 
 up:
 	docker compose up -d
-	docker compose exec dev bash
+	docker compose exec dev zsh
 
 down:
 	docker compose down

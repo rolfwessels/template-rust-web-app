@@ -8,8 +8,14 @@ services:
         GID: ${DEV_GID:-1000}
     environment:
       LISTEN_ADDR: 0.0.0.0:8080
+      HISTFILE: /cache/.zsh_history
     ports:
       - "127.0.0.1:8080:8080"
     volumes:
       - .:/workspace
+      - ./zshrc:/home/dev/.zshrc
+      - shell-history:/cache
     command: ["sleep", "infinity"]
+
+volumes:
+  shell-history:
