@@ -40,7 +40,7 @@ To work in Docker, run `make build up`, then run `make start` from the dev shell
 - `src/core/` holds the list port and use cases.
 - `src/server/` holds the GraphQL, HTTP, and in-memory adapters.
 - `src/web/` holds the React app and browser smoke test. Vite writes the production bundle to `src/web/dist/`.
-- `AGENTS.md` describes the dependency direction, test-first workflow, and verification commands.
+- [AGENTS.md](AGENTS.md) describes the dependency direction, test-first workflow, and verification commands.
 
 ## Testing
 
